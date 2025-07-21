@@ -6,7 +6,7 @@ import json
 import time
 from typing import List, Any
 
-from src.agents_redis.session import RedisSession, RedisSessionManager
+from agents_redis.session import RedisSession, RedisSessionManager
 
 
 class TestRedisSessionIntegration:

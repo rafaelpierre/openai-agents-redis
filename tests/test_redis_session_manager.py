@@ -4,7 +4,7 @@ import pytest
 import asyncio
 from unittest.mock import patch
 
-from src.agents_redis.session import RedisSessionManager, RedisSession
+from agents_redis.session import RedisSessionManager, RedisSession
 
 
 class TestRedisSessionManager:

@@ -7,7 +7,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 from typing import Any
 
-from src.agents_redis.session import RedisSession
+from agents_redis.session import RedisSession
 
 
 class TestRedisSession:
@@ -40,7 +40,7 @@ class TestRedisSession:
         
         assert session.session_id == "test_123"
         assert session.redis_url == "redis://localhost:6379"
-        assert session.db == "default"
+        assert session.db == 0
         assert session.session_prefix == "agent_session"
         assert session.messages_prefix == "agent_messages"
         assert session.ttl is None

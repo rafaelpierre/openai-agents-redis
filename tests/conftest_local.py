@@ -13,7 +13,7 @@ import pytest
 import redis.asyncio as redis
 from typing import AsyncGenerator
 
-from src.agents_redis.session import RedisSession, RedisSessionManager
+from agents_redis.session import RedisSession, RedisSessionManager
 
 
 @pytest.fixture(scope="session")

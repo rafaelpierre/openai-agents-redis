@@ -2,7 +2,7 @@
 
 import pytest
 import redis.asyncio as redis
-from src.agents_redis.session import RedisSession, RedisSessionManager
+from agents_redis.session import RedisSession, RedisSessionManager
 
 
 @pytest.mark.asyncio
