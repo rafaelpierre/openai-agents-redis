@@ -1,0 +1,28 @@
+name: Continuous Deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.13'
+            - name: Install dependencies
+              run: |
+                pip install -U pip uv
+                uv venv && uv sync
+            - name: Run tests
+              run: |
+                uv run pytest --cov=src/agents_redis
+            - name: Build package
+              run: |
+                uv build
+            - name: Publish package
+              run: |
+                uv publish --repository pypi

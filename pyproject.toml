@@ -2,8 +2,15 @@
 name = "openai-agents-redis"
 version = "0.1.0"
 description = "Session management for OpenAI Agents SDK using Redis."
-readme = "README.md"
 requires-python = ">=3.13"
+authors = [{name = "Rafael Pierre"}]
+readme = "README.md"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 dependencies = [
     "anyio>=4.9.0",
     "openai-agents>=0.2.2",
@@ -21,10 +28,10 @@ dev = [
 ]
 
 [tool.uv.workspace]
-members = ["agents"]
+members = ["agents_redis"]
 
 [tool.uv.sources]
-agents = { workspace = true }
+agents_redis = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
@@ -35,3 +42,7 @@ packages = ["src/agents_redis"]
 
 [tool.coverage.run]
 source = ["tests", "src/agents_redis"]
+
+[project.urls]
+Homepage = "https://github.com/rafaelpierre/openai-agents-redis"
+Repository = "https://github.com/rafaelpierre/openai-agents-redis"
