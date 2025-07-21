@@ -50,10 +50,10 @@ result = Runner.run_streamed(
 
 ### Testing Requirements
 
-🐳 [Docker](https://www.docker.com/)
-⚡️ [uv](https://astral.sh/uv)
-🦾 [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) (optional)
-🔑 OpenAI API Key (optional)
+🐳 [Docker](https://www.docker.com/) <br>
+⚡️ [uv](https://astral.sh/uv) <br>
+🦾 [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) (optional) <br>
+🔑 OpenAI API Key (optional) <br>
 
 ### Running Tests
 
