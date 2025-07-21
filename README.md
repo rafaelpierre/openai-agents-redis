@@ -7,6 +7,15 @@
 
 > Native [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/) session management implementation using [Redis](https://redis.io) as the persistence layer.
 
+
+## Demo
+
+<p align="center">
+    <a href="https://www.youtube.com/watch?v=DWr_Ata4gxQ">
+        <img src="https://img.youtube.com/vi/DWr_Ata4gxQ/0.jpg" alt="Demo Video" width="560" />
+    </a>
+</p>
+
 ## ✨ Features
 
 - 🧠 **Intelligent Agents**: Built on OpenAI's powerful Agents SDK
