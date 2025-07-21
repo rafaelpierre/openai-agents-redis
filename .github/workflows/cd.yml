@@ -19,7 +19,7 @@ jobs:
                 uv venv && uv sync
             - name: Run tests
               run: |
-                uv run pytest --cov=src/agents_redis
+                uv pip install -e . && uv run pytest --cov=src/agents_redis
             - name: Build package
               run: |
                 uv build
