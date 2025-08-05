@@ -12,7 +12,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "anyio>=4.9.0",
     "openai-agents>=0.2.2",
     "redis[hiredis]>=6.2.0",
 ]
@@ -20,6 +19,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "anyio>=4.9.0",
+    "fastapi[standard]>=0.116.1",
+    "openai>=1.97.0",
     "pyclean>=3.1.0",
     "pytest>=8.4.1",
     "pytest-asyncio>=0.23.0",

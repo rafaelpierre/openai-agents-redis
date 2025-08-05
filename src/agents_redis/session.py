@@ -230,8 +230,8 @@ class RedisSessionManager:
         db: int = 0,
         session_prefix: str = "agent_session",
         messages_prefix: str = "agent_messages",
-        default_ttl: int | None = None,
-        max_connections: int = 10,
+        default_ttl: int | None = 30,
+        max_connections: int = 20,
     ):
         """Initialize the Redis session manager.
 

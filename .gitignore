@@ -13,3 +13,5 @@ wheels/
 .pytest_cache
 .coverage
 coverage.xml
+
+.env
