@@ -36,7 +36,7 @@ class TestRedisSessionManager:
         assert manager.db == 0
         assert manager.session_prefix == "agent_session"
         assert manager.messages_prefix == "agent_messages"
-        assert manager.default_ttl is None
+        assert manager.default_ttl == 30
 
     @pytest.mark.asyncio
     async def test_get_session(self, redis_session_manager):
