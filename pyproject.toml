@@ -1,6 +1,6 @@
 [project]
 name = "openai-agents-redis"
-version = "0.1.0"
+version = "0.2.0-rc.1"
 description = "Session management for OpenAI Agents SDK using Redis."
 requires-python = ">=3.13"
 authors = [{name = "Rafael Pierre"}]
