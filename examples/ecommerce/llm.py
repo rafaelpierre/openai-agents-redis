@@ -1,6 +1,9 @@
 from openai import AsyncAzureOpenAI
 from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_azure_openai_client():
     """Initialize Azure OpenAI client with DefaultAzureCredential."""
