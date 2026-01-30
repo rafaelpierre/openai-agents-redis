@@ -27,6 +27,7 @@ class RedisSession:
         db: int = 0,
         session_prefix: str = "agent_session",
         messages_prefix: str = "agent_messages",
+        search_prefix: str = "agent_search",
         ttl: int | None = None,
     ):
         """Initialize the Redis session.
@@ -37,6 +38,7 @@ class RedisSession:
             db: Redis database name. Defaults to `default`
             session_prefix: Prefix for session metadata keys. Defaults to 'agent_session'
             messages_prefix: Prefix for message list keys. Defaults to 'agent_messages'
+            search_prefix: Prefix for search document keys. Defaults to 'agent_search'
             ttl: Time-to-live for session data in seconds. If None, data persists indefinitely
         """
         self.session_id = session_id
@@ -44,11 +46,13 @@ class RedisSession:
         self.db = db
         self.session_prefix = session_prefix
         self.messages_prefix = messages_prefix
+        self.search_prefix = search_prefix
         self.ttl = ttl
         
         # Redis keys for this session
         self.session_key = f"{session_prefix}:{session_id}"
         self.messages_key = f"{messages_prefix}:{session_id}"
+        self.search_key = f"{search_prefix}:{session_id}"
         
         self._redis_client: redis.Redis | None = None
 
@@ -84,10 +88,31 @@ class RedisSession:
         # Set TTL if specified (always refresh TTL)
         if self.ttl is not None:
             await client.expire(self.session_key, self.ttl)
-            # For messages key, we only set TTL if it exists
-            # If it doesn't exist yet, TTL will be set when first message is added
-            if await client.exists(self.messages_key):
-                await client.expire(self.messages_key, self.ttl)
+
+    async def ensure_search_index(self, index_name: str = "agent_search_idx") -> None:
+        """Ensure RediSearch index exists for session search."""
+        client = await self._get_redis_client()
+
+        try:
+            # Check if index already exists
+            await client.execute_command("FT.INFO", index_name)
+            return
+        except Exception:
+            pass  # Index does not exist
+
+        try:
+            await client.execute_command(
+                "FT.CREATE",
+                index_name,
+                "ON", "HASH",
+                "PREFIX", "1", f"{self.search_prefix}:",
+                "SCHEMA",
+                "content", "TEXT"
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "RediSearch module is not available in this Redis instance"
+            ) from exc
 
     async def _update_session_timestamp(self, client: redis.Redis) -> None:
         """Update the session's last updated timestamp."""
@@ -134,7 +159,14 @@ class RedisSession:
             return
 
         client = await self._get_redis_client()
-        
+        search_fragments = []
+
+        for item in items:
+            if isinstance(item, dict):
+                content = item.get("content")
+                if isinstance(content, str):
+                    search_fragments.append(content)
+
         # Use pipeline for atomic operations
         async with client.pipeline() as pipe:
             # Ensure session exists
@@ -143,15 +175,26 @@ class RedisSession:
             # Add items to the end of the list (maintaining chronological order)
             serialized_items = [json.dumps(item) for item in items]
             await pipe.rpush(self.messages_key, *serialized_items)
+            current_time = time.time()  # Use float for higher precision
+            if search_fragments:
+                combined_text = " ".join(search_fragments)
+                await pipe.hset(
+                    self.search_key,
+                    mapping={
+                        "session_id": self.session_id,
+                        "content": combined_text,
+                        "updated_at": str(current_time),
+                    }
+                )
             
             # Update session timestamp
-            current_time = time.time()  # Use float for higher precision
             await pipe.hset(self.session_key, "updated_at", str(current_time))
             
             # Set TTL if specified
             if self.ttl is not None:
                 await pipe.expire(self.session_key, self.ttl)
                 await pipe.expire(self.messages_key, self.ttl)
+                await pipe.expire(self.search_key, self.ttl)
             
             await pipe.execute()
 
@@ -184,7 +227,7 @@ class RedisSession:
         client = await self._get_redis_client()
         
         # Delete both session metadata and messages
-        await client.delete(self.session_key, self.messages_key)
+        await client.delete(self.session_key, self.messages_key, self.search_key)
 
     async def get_session_info(self) -> dict[str, str] | None:
         """Get session metadata.
@@ -205,6 +248,46 @@ class RedisSession:
         """
         client = await self._get_redis_client()
         return await client.llen(self.messages_key)
+
+    async def get_search_document(self) -> dict[str, str] | None:
+        """Get search document for this session.
+
+        Returns:
+            Dictionary containing search document, or None if session doesn't exist
+        """
+        client = await self._get_redis_client()
+        search_data = await client.hgetall(self.search_key)
+        
+        return search_data if search_data else None
+    
+    async def search(
+        self,
+        query: str,
+        index_name: str = "agent_search_idx",
+        limit: int = 10,
+    ) -> list[str]:
+        """Search session content using RediSearch."""
+        client = await self._get_redis_client()
+        await self.ensure_search_index(index_name)
+
+        try:
+            result = await client.execute_command(
+                "FT.SEARCH",
+                index_name,
+                query,
+                "LIMIT", "0", str(limit),
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "RediSearch query failed or module not available"
+            ) from exc
+
+        # Result format: [count, key1, fields1, key2, fields2, ...]
+        keys = []
+        for i in range(1, len(result), 2):
+            keys.append(result[i])
+
+        return keys
 
     async def close(self) -> None:
         """Close the Redis connection."""
@@ -230,6 +313,7 @@ class RedisSessionManager:
         db: int = 0,
         session_prefix: str = "agent_session",
         messages_prefix: str = "agent_messages",
+        search_prefix: str = "agent_search",
         default_ttl: int | None = 30,
         max_connections: int = 20,
     ):
@@ -247,6 +331,7 @@ class RedisSessionManager:
         self.db = db
         self.session_prefix = session_prefix
         self.messages_prefix = messages_prefix
+        self.search_prefix = search_prefix
         self.default_ttl = default_ttl
         
         self._redis_pool = redis.ConnectionPool.from_url(
@@ -326,8 +411,9 @@ class RedisSessionManager:
         
         session_key = f"{self.session_prefix}:{session_id}"
         messages_key = f"{self.messages_prefix}:{session_id}"
+        search_key = f"{self.search_prefix}:{session_id}"
         
-        deleted_count = await client.delete(session_key, messages_key)
+        deleted_count = await client.delete(session_key, messages_key, search_key)
         await client.aclose()
         
         return deleted_count > 0
